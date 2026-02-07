@@ -11,7 +11,9 @@ import org.springframework.transaction.annotation.Transactional;
 import com.jeanbauch.demo.dto.CategoryDTO;
 import com.jeanbauch.demo.entities.Category;
 import com.jeanbauch.demo.repositories.CategoryRepository;
-import com.jeanbauch.demo.services.exceptions.EntityNotFoundException;
+import com.jeanbauch.demo.services.exceptions.ResourceNotFoundException;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class CategoryService {
@@ -29,7 +31,7 @@ public class CategoryService {
     @Transactional(readOnly = true)
     public CategoryDTO findById(Long id) {
         Optional<Category> obj = repository.findById(id);
-        Category entity = obj.orElseThrow(() -> new EntityNotFoundException("Entity not found"));
+        Category entity = obj.orElseThrow(() -> new ResourceNotFoundException("Entity not found"));
 
         return new CategoryDTO(entity);
     }
@@ -41,5 +43,18 @@ public class CategoryService {
         entity = repository.save(entity);
 
         return new CategoryDTO(entity);
+    }
+
+    @Transactional
+    public CategoryDTO update(Long id, CategoryDTO dto) {
+        try {
+            Category entity = repository.getReferenceById(id);
+            entity.setName(dto.getName());
+            entity = repository.save(entity);
+
+            return new CategoryDTO(entity);
+        } catch (EntityNotFoundException e) {
+            throw new ResourceNotFoundException("Id not found " + id);
+        }
     }
 }
